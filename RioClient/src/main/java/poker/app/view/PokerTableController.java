@@ -250,7 +250,7 @@ public class PokerTableController implements Initializable {
 			else{
 				System.out.println("Adding to player hand");
 				try {
-					for(int j = 1; j <= 4; j++){
+					for(int j = 1; j < 5; j++){
 						System.out.println("Player "+ j+" "+HubPokerGame.getPlayerByPosition(j));
 						if (HubPokerGame.getPlayerByPosition(j) != null){
 							//Why is the deck not being created

@@ -32,6 +32,15 @@ public class GamePlay implements Serializable   {
 		this.setGameID(UUID.randomUUID());
 		this.setGameDealer(GameDealer);
 		this.rle = rle;
+		if(rle.GetNumberOfJokers() != 0 && rle.GetWildCards().size() == 0){
+			this.GameDeck = new Deck(rle.GetNumberOfJokers());
+		}
+		else if(rle.GetNumberOfJokers() != 0 && rle.GetWildCards().size() != 0){
+			this.GameDeck = new Deck(rle.GetNumberOfJokers(),rle.GetWildCards());
+		}
+		else{
+			this.GameDeck = new Deck();
+		}
 	}
 	
 	public static void StateOfGamePlay(GamePlay g)
