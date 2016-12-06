@@ -6,8 +6,12 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.UUID;
 
+import pokerEnums.eCardDestination;
 import pokerEnums.eCardNo;
+import pokerEnums.eDrawCount;
+import pokerEnums.eGame;
 import pokerEnums.eHandExceptionType;
 import pokerEnums.eHandStrength;
 import pokerEnums.eRank;
@@ -16,12 +20,39 @@ import exceptions.HandException;
 
 public class Hand implements Serializable  {
 
+	private UUID HandId;
+	private Player HandPlayer;
 	private ArrayList<Card> CardsInHand = new ArrayList<Card>();
 	private boolean bScored;
 	private HandScore hs;
 	private ArrayList<Hand> ExplodedHands = new ArrayList<Hand>();
+	private boolean bHandFolded = false;
+	private boolean bIsHandWinner = false;
 
-	 ArrayList<Card> getCardsInHand() {
+	public Hand(Player handPlayer, UUID HandID) {
+		
+		this.HandId = (HandID == null) ? UUID.randomUUID() : HandID;		
+		this.HandPlayer = handPlayer;
+	}	
+	
+	 public Hand() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public UUID getHandId() {
+		return HandId;
+	}
+
+	public Player getHandPlayer() {
+		return HandPlayer;
+	}
+
+
+	public void setHandPlayer(Player handPlayer) {
+		HandPlayer = handPlayer;
+	}
+	
+	public ArrayList<Card> getCardsInHand() {
 		return CardsInHand;
 	}
 
@@ -124,6 +155,40 @@ public class Hand implements Serializable  {
 		} else {
 			return Hands.get(0);
 		}
+	}
+	
+	public ArrayList<Card> GetCardsDrawn(eDrawCount eDrawCount, eGame eGame, eCardDestination eCardDestination)
+	{
+		int iStartCard = 0;
+		int iStartCardCommon = 0;
+		int iCardCount = 0;
+		Rule rle = new Rule(eGame);
+		ArrayList<Card> CardsDrawn = new ArrayList<Card>();
+		
+		for (eDrawCount eDraw : eDrawCount.values()) {			
+			iCardCount= rle.GetDrawCard(eDraw) != null ?  rle.GetDrawCard(eDraw).getCardCount().getCardCount() : 0;			
+			if (eDraw == eDrawCount){
+				break;
+			}
+			if (rle.GetDrawCard(eDraw) != null){
+				if (rle.GetDrawCard(eDraw).getCardDestination()  == eCardDestination.Community){
+					iStartCardCommon += rle.GetDrawCard(eDraw).getCardCount().getCardCount();
+				}
+				else if  (rle.GetDrawCard(eDraw).getCardDestination() == eCardDestination.Player){
+					iStartCard += rle.GetDrawCard(eDraw).getCardCount().getCardCount();
+				}
+			}
+		}		
+		
+		for (int iCard = 0;iCard < iCardCount;iCard++){
+			if (eCardDestination == eCardDestination.Community){
+				CardsDrawn.add(CardsInHand.get(iCard + iStartCardCommon));
+			}
+			else if  (eCardDestination == eCardDestination.Player){				
+				CardsDrawn.add(CardsInHand.get(iCard + iStartCard));	
+			}			
+		}		
+		return CardsDrawn;
 	}
 
 	/**

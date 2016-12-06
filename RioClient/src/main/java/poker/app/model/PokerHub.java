@@ -94,44 +94,11 @@ public class PokerHub extends Hub {
 				HubGamePlay.setGameDeck(tempdeck);
 				HubGamePlay = new GamePlay(rle, dealer.getPlayerID());
 				HubGamePlay.setGamePlayers(HubPokerTable.getHashPlayers());
+				HubGamePlay.setiActOrder(GamePlay.GetOrder(dealer.getiPlayerPosition()));
+				
 				
 				//	TODO: 
 			case Draw:
-				Rule rule = HubGamePlay.getRule();
-				/**Iterator it = getHashPlayers().entrySet().iterator();
-				while (it.hasNext()) {
-					Map.Entry pair = (Map.Entry) it.next();
-					Player p = (Player)pair.getValue();
-					if (p.getiPlayerPosition() == iPlayerPosition)
-						pl = p;
-				}*/
-				/**int [] order = new int [4];
-				order = HubGamePlay.GetOrder(HubGamePlay.getGamePlayers().get(HubGamePlay.getGameDealer()).getiPlayerPosition());
-				int currentPlayer = order[0];
-				for(int i = 1; i <= rule.getTotalCardsToDraw(); i++){
-					CardDraw cd = rule.GetDrawCard(eDrawCount.geteDrawCount(i));
-					if (cd.getCardDestination() == eCardDestination.Community){
-						try {
-							HubGamePlay.addCardtoCommunity(HubGamePlay.getGameDeck().Draw());
-						} catch (DeckException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					else{
-						
-						try {
-							HubGamePlay.getPlayerHand(HubGamePlay.getPlayerByPosition(currentPlayer)).AddToCardsInHand(HubGamePlay.getGameDeck().Draw());
-							currentPlayer = HubGamePlay.NextPosition(currentPlayer, order);
-						} catch (DeckException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						};
-						
-					}
-				}
-				*/
-				
 				//	TODO: Draw cards based on next in hmCardDraw
 				//			You might have to draw two cards, one card, three cards
 				
@@ -139,7 +106,45 @@ public class PokerHub extends Hub {
 
 				//	TODO: Update eDrawCountLast in GamePlay.  This attribute will 
 				//		tell the client what card(s) need to be dealt to which players.
-				HubGamePlay.seteDrawCountLast(eDrawCount.geteDrawCount(rule.getTotalCardsToDraw()));
+				HubGamePlay.seteDrawCountLast(eDrawCount.geteDrawCount(HubGamePlay.geteDrawCountLast().getDrawNo()));
+				HubGamePlay.seteGameState(eGameState.DRAW);
+				
+				CardDraw hmCardDraw = HubGamePlay.getRule().GetDrawCard(HubGamePlay.geteDrawCountLast());
+				int CardDrawNo = hmCardDraw.getCardCount().getCardCount();
+				if (hmCardDraw.getCardDestination() == eCardDestination.Community) {
+					Player p = HubGamePlay.getPlayerCommon();
+					if (p != null) {
+						for (int i = 0; i < CardDrawNo; i++) {
+							try {
+								HubGamePlay.drawCard(p, hmCardDraw.getCardDestination());
+							} catch (DeckException e) {
+								resetOutput();
+								sendToAll(e);
+								e.printStackTrace();
+								return;
+							}
+						}
+					}
+				}
+				else if (hmCardDraw.getCardDestination() == eCardDestination.Player) {
+					for (int i : HubGamePlay.getiActOrder()) {
+						Player p = HubGamePlay.getPlayerByPosition(i);
+						if (p != null) {
+							for (int j = 0; j < CardDrawNo; j++) {
+								try {
+									HubGamePlay.drawCard(p, hmCardDraw.getCardDestination());
+								} catch (DeckException e) {
+									resetOutput();
+									sendToAll(e);
+									e.printStackTrace();
+									return;
+								}
+							}
+						}
+					}
+
+				}
+
 				resetOutput();
 				
 				sendToAll(HubGamePlay);	

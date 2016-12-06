@@ -8,7 +8,10 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
 
+import exceptions.DeckException;
+import pokerEnums.eCardDestination;
 import pokerEnums.eDrawCount;
+import pokerEnums.eGameState;
 
 public class GamePlay implements Serializable   {
 
@@ -19,6 +22,7 @@ public class GamePlay implements Serializable   {
 	
 	private HashMap<UUID, Hand> hmPlayerHand = new HashMap<UUID, Hand>();
 	
+	private Player PlayerCommon;
 	private Hand GameCommonHand = new Hand();
 	private Rule rle;
 	private Deck GameDeck = null;
@@ -26,12 +30,21 @@ public class GamePlay implements Serializable   {
 	private int[] iActOrder = null;
 	private Player PlayerNextToAct = null;
 	private eDrawCount eDrawCountLast;
+	private eGameState eGameState;
+
 	
 	public GamePlay(Rule rle, UUID GameDealerID)
 	{
 		this.setGameID(UUID.randomUUID());
 		this.setGameDealer(GameDealer);
 		this.rle = rle;
+		if ((rle.getCommunityCardsMax() == 0) && (rle.getCommunityCardsMin() == 0)) {
+			this.PlayerCommon = null;
+		}
+		if (rle.GetCommunityCardsCount() > 0) {
+			this.PlayerCommon = new Player();
+			this.GameCommonHand = new Hand(PlayerCommon, null);
+		}
 		if(rle.GetNumberOfJokers() != 0 && rle.GetWildCards().size() == 0){
 			this.GameDeck = new Deck(rle.GetNumberOfJokers());
 		}
@@ -172,6 +185,26 @@ public class GamePlay implements Serializable   {
 
 	public void seteDrawCountLast(eDrawCount eDrawCountLast) {
 		this.eDrawCountLast = eDrawCountLast;
+	}
+	
+	public eGameState geteGameState() {
+		return eGameState;
+	}
+
+	public void seteGameState(eGameState eGameState) {
+		this.eGameState = eGameState;
+	}
+
+	public Player getPlayerCommon() {
+		return PlayerCommon;
+	}
+	
+	public void drawCard(Player p, eCardDestination eCardDestination) throws DeckException {
+		if (eCardDestination == eCardDestination.Player) {
+			this.getPlayerHand(p).AddToCardsInHand(this.getGameDeck().Draw());
+		} else if (eCardDestination == eCardDestination.Community) {
+			this.getGameCommonHand().AddToCardsInHand(this.getGameDeck().Draw());
+		}
 	}
 
 	public static int[] GetOrder(int iStartPosition) {
